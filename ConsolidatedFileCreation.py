@@ -31,10 +31,14 @@ print(" 	Delivery DataPoint file consolidation - Started")
 
 # Variables assigning [Merging the MTO files]
 outputFile = config['datapoints-ConsolidatedFileCreation']['outputFile']
+MTOfileCount = config['datapoints-ConsolidatedFileCreation']['MTOfileCount']
 
 # Download the MTO DAT files
-latestFileDate = util.downloadMTOfiles(sourcePath, 5, '        ')
+latestFileDate, date_count = util.downloadMTOfiles(sourcePath, int(MTOfileCount), '        ')
 # used the above variable [latestFileDate] down while calling a function to download foddMMMyyyybhav.csv
+
+# Delete the older MTO files
+util.deleteoldmto(sourcePath, int(date_count), '          ')
 
 # change the filename of "security wise del position" from MTO_DDMMYYYY.DAT to MTO_YYYYMMDD.txt
 for filename in os.listdir(sourcePath):
@@ -123,6 +127,13 @@ zip_file = util.downloadfofiles(sourcePath, latestFileDate, '       ')
 
 # Extract the zip file
 # open the zip file in read mode
-with zipfile.ZipFile(sourcePath + "\\" + zip_file, 'r') as zip_ref:
-    # extract all the contents of the zip file to the specified directory
-    zip_ref.extractall(sourcePath)
+if zip_file.endswith("zip"):
+    with zipfile.ZipFile(sourcePath + "\\" + zip_file, 'r') as zip_ref:
+        # extract all the contents of the zip file to the specified directory
+        zip_ref.extractall(sourcePath)
+
+print(" 	Future OI data consolidation - Completed")
+
+
+print("")
+print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Completed")
