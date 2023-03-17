@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 import pandas as pd
 import glob
+import zipfile
 
 
 # import - Own utils
@@ -30,14 +31,22 @@ print(" 	Delivery DataPoint file consolidation - Started")
 
 # Variables assigning [Merging the MTO files]
 outputFile = config['datapoints-ConsolidatedFileCreation']['outputFile']
+MTOfileCount = config['datapoints-ConsolidatedFileCreation']['MTOfileCount']
+
+# Download the MTO DAT files
+latestFileDate, date_count = util.downloadMTOfiles(sourcePath, int(MTOfileCount), '        ')
+# used the above variable [latestFileDate] down while calling a function to download foddMMMyyyybhav.csv
+
+# Delete the older MTO files
+util.deleteoldmto(sourcePath, int(date_count), '          ')
 
 # change the filename of "security wise del position" from MTO_DDMMYYYY.DAT to MTO_YYYYMMDD.txt
 for filename in os.listdir(sourcePath):
     if filename.endswith('DAT') and filename.startswith('MTO'):
         name, ext = os.path.splitext(filename)
-        print(name)
+        # print(name)
         newName = (name[:4] + name[-4:] + name[6:8] + name[4:6])
-        # Delete the file if already present
+        # Delete the TXT file if already present
         util.checkAndDeleteFile(sourcePath+"\\" + newName + '.txt', 'N', newName + '.txt', '')
         os.rename(os.path.join(sourcePath, filename), os.path.join(sourcePath, newName + '.txt'))
 
@@ -66,7 +75,8 @@ for txt_file in txt_files:
     # Extract the file name from the file path
     file_name = os.path.basename(txt_file)
     # Read the txt file into a dataframe
-    temp_df = pd.read_csv(txt_file, sep=',', skiprows=4, header=None, names=['RecordType', 'Sno', 'Script', 'Type', 'QtyTraded', 'DelQty', '%Del'])
+    temp_df = pd.read_csv(txt_file, sep=',', skiprows=4, header=None, names=['RecordType', 'Sno', 'Script', 'Type',
+                                                                             'QtyTraded', 'DelQty', '%Del'])
     # Add a new column to the dataframe with the Date name
     temp_df['Date'] = file_name[4:12]
     # Filter the dataframe to include only records with record-type = 20 and Type = 'EQ'
@@ -78,7 +88,7 @@ for txt_file in txt_files:
 df = pd.concat(data, ignore_index=True)
 
 # Sort the merged data by the 'Script' field
-df = df.sort_values(['Script','Date'])
+df = df.sort_values(['Script', 'Date'])
 
 # Move the file name column to the front of the dataframe
 cols = df.columns.tolist()
@@ -98,15 +108,32 @@ print(" 	Future OI data consolidation - Started")
 # Variables assigning [Future OI data consolidation]
 FutureOutFileName = config['datapoints-ConsolidatedFileCreation']['FutureOutFileName']
 
+"""
 # Find the latest file to consolidate. File Format [foDDMMMYYYYbhav.csv]
-
 # Get a list of all files in the directory
 files = os.listdir(sourcePath)
 # Filter the list to only include csv files with the correct format
 csv_files = [f for f in files if f.endswith('.csv') and f.startswith('fo') and len(f) == 19]
 # created a function to return the latest file
-latest_file = util.latest_fo_File(csv_files)
+latest_file = util.latest_fo_file(csv_files)
 print(latest_file)
+"""
 
-# Delete if the file is already present
+# Delete if the file [FandO_Output.csv] is already present
 util.checkAndDeleteFile(destinationpath+"\\" + FutureOutFileName, 'Y', FutureOutFileName, '        ')
+
+# Download the latest zip file
+zip_file = util.downloadfofiles(sourcePath, latestFileDate, '       ')
+
+# Extract the zip file
+# open the zip file in read mode
+if zip_file.endswith("zip"):
+    with zipfile.ZipFile(sourcePath + "\\" + zip_file, 'r') as zip_ref:
+        # extract all the contents of the zip file to the specified directory
+        zip_ref.extractall(sourcePath)
+
+print(" 	Future OI data consolidation - Completed")
+
+
+print("")
+print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Completed")
