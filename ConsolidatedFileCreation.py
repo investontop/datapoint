@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import glob
 import zipfile
+import subprocess
 
 
 # import - Own utils
@@ -14,7 +15,7 @@ from utility import util
 
 # read configs
 config = configparser.ConfigParser()        # instance
-configFile = 'config-test.ini'              # Configfile name - We can change this file name as per our requirement
+configFile = util.initiate_env_var('ConfigFile')
 config.read(configFile)
 
 print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Started - Considering config: ["
@@ -88,7 +89,7 @@ for txt_file in txt_files:
 df = pd.concat(data, ignore_index=True)
 
 # Sort the merged data by the 'Script' field
-df = df.sort_values(['Script', 'Date'])
+df = df.sort_values(['Script', 'Date'], ascending=[True, False])
 
 # Move the file name column to the front of the dataframe
 cols = df.columns.tolist()
@@ -123,17 +124,80 @@ print(latest_file)
 util.checkAndDeleteFile(destinationpath+"\\" + FutureOutFileName, 'Y', FutureOutFileName, '        ')
 
 # Download the latest zip file
-zip_file = util.downloadfofiles(sourcePath, latestFileDate, '       ')
+zip_file = util.downloadfofiles(sourcePath, latestFileDate, '        ')
 
 # Extract the zip file
 # open the zip file in read mode
 if zip_file.endswith("zip"):
     with zipfile.ZipFile(sourcePath + "\\" + zip_file, 'r') as zip_ref:
         # extract all the contents of the zip file to the specified directory
+        extractFile = zip_ref.namelist()[0]
         zip_ref.extractall(sourcePath)
+else:
+    extractFile = zip_file
+
+# Get all the fo files in the sourcePath directory
+fo_files = glob.glob(sourcePath + '\\fo*bhav*')
+# Remove the other old files
+for fo_file in [f for f in fo_files if not f.endswith(extractFile)]:
+    os.remove(fo_file)
+
+# Consolidate the data in the fo file
+util.consolidatefofile(sourcePath, destinationpath, extractFile, FutureOutFileName, '        ')
 
 print(" 	Future OI data consolidation - Completed")
+# ################  [END] Future OI data consolidation
 
+# ################  [START] Sector data file creation
+
+print("")
+print(" 	Sector data file creation - Started")
+
+# Download Sector files - Commenting these functions as this is not working as expected. The py keeps on running for long time.
+# util.download_files(sourcePath, 'ind_nifty500list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_nifty500list.csv')
+# util.download_files(sourcePath, 'ind_niftymidcap100list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftymidcap100list.csv')
+# util.download_files(sourcePath, 'ind_niftysmallcap250list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftysmallcap250list.csv')
+# util.download_files(sourcePath, 'ind_niftylargemidcap250list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftylargemidcap250list.csv')
+# util.download_files(sourcePath, 'ind_niftymidsmallcap400list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftymidsmallcap400list.csv')
+
+
+# Variable
+SectorFile = config['datapoints-ConsolidatedFileCreation']['SectorOutFileName']
+SectorFilePath = os.path.join(destinationpath, SectorFile)
+
+# Combine the Sector data in a separate csv
+# Initialize an empty dataframe to store the combined data
+combined_df = pd.DataFrame()
+
+for filename in os.listdir(sourcePath):
+    if filename.startswith('ind_nifty') and filename.endswith('csv'):
+        file_path = os.path.join(sourcePath, filename)  # Join the directory path and filename
+        df = pd.read_csv(file_path, usecols=[2, 1])
+        # Concatenate the data to the combined dataframe
+        combined_df = pd.concat([combined_df, df], ignore_index=True)
+
+# Move the column
+cols = combined_df.columns.tolist()
+cols = [cols[-1]] + cols[:-1]   # takes the last element of the list, and concatenates it with the rest of the list,
+# which is obtained by slicing the last element
+combined_df = combined_df[cols]
+
+# Sort the dataframe
+combined_df = combined_df.sort_values(by=['Symbol'], ascending=True)
+
+# Drop duplicates based on all columns except the index
+combined_df = combined_df.drop_duplicates(keep='first')
+
+# Save the combined data to a new file named "SectorName.csv"
+combined_df.to_csv(SectorFilePath, index=False)
+print("         Sectorfile created [" + SectorFile + "]")
+
+print(" 	Sector data file creation - Completed")
+# ################  [END] Sector data file creation
 
 print("")
 print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Completed")
+
+
+# execute example.py
+# subprocess.call(['python', 'example.py'])
