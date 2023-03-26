@@ -1,0 +1,12 @@
+flowchart TB
+    A[Consolidated<br>FileCreation.py] -->|imports, variable configs| B
+    subgraph B[MTO file consolidation]
+    B1[Download <br>MTO_DDMMYYYY.DAT] --> B2[Delete old MTO txt files.<br>MTO_YYYYMMDD.txt]
+    B2 --> B3[Rename 'MTO_DDMMYYYY.DAT'<br>'MTO_YYYYMMDD.txt']
+    B3 --> B4[Consolidate all<br> 'MTO_YYYYMMDD.txt' to <br> 'MergedDeliveryData.csv']
+    end
+    B --> C
+    subgraph C[Future OI data consolidation]
+    C1[Delete old outputfile<br>FandO_Output.csv] --> C2[Download zip file<br> fo10MAR2023bhav.csv.zip.<br> Extract 'fo10MAR2023bhav.csv']
+    C2 --> C4[Consolidate <br>fo10MAR2023bhav.csv to <br> FandO_Output.csv]
+    end
