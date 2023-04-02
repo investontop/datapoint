@@ -1,5 +1,5 @@
 flowchart TB
-    A[Consolidated<br>FileCreation.py] -->|imports, variable configs| B
+    A[ConsolidatedFileCreation.py] -->|imports, variable configs| B
     subgraph B[MTO file consolidation]
     B1[Download MOT DAT files from url. <br> The noOfFile count is in config.ini] --> B2[Delete old MTO txt files.<br>Older files which are <br>more than noOfFiles]
     B2 --> B3[Rename the DAT files in to txt<br>Also change the Date format<br> in the filename from <br> DDMMYYYY to YYYYMMDD]
@@ -12,7 +12,8 @@ flowchart TB
     end
     C --> D
     subgraph D[Sector Data file creation]
+    D1[Combine all ind_nifty*csv <br> Note: All these files need <br>to be downloaded Manually Ocassionally.] --> D2[SectorName.csv]
     end
     D --> E
-    subgraph E[Few other files download]
+    subgraph E[Few other files download. <br> Auto Download: <br> 1. sec_bhavdata_full.csv <br> 2. block.csv <br> 3. bulk.csv]
     end
