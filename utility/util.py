@@ -6,6 +6,7 @@ import sys
 import re
 import csv
 import urllib.request
+import pandas as pd
 
 
 def initiate_env_var(whattoreturn):
@@ -13,9 +14,9 @@ def initiate_env_var(whattoreturn):
         return 'config-test.ini'
 
 
-def checkAndDeleteFile(file, displaymsg, filename, intend):
-    if os.path.exists(file):
-        os.remove(file)
+def checkAndDeleteFile(filepath, displaymsg, filename, intend):
+    if os.path.exists(filepath):
+        os.remove(filepath)
         if displaymsg == 'Y':
             print(intend + "Deleted the existing file [" + filename + "]")
 
@@ -45,6 +46,8 @@ def downloadMTOfiles(sourcepath, noOfFiles, intend):
             if count == 0:
                 latestFileDate = datetime.strptime(datestring, "%Y%m%d")
                 latestFileDate = latestFileDate.strftime("%d%b%Y")
+                secfileDate = datetime.strptime(datestring, "%Y%m%d")
+                secfileDate = secfileDate.strftime("%d%m%Y")
             count = count + 1
         else:
             filedownload = 'MTO_' + datestring[6:8] + datestring[4:6] + datestring[:4] + '.DAT'
@@ -57,6 +60,7 @@ def downloadMTOfiles(sourcepath, noOfFiles, intend):
                 print(intend + 'Data downloaded successfully. [' + filedownload + ']')
                 if count == 0:
                     latestFileDate = filedownload[4:12]
+                    secfileDate = filedownload[4:12]
                     latestFileDate = datetime.strptime(latestFileDate, "%d%m%Y")
                     latestFileDate = latestFileDate.strftime("%d%b%Y")
                 count = count + 1
@@ -65,7 +69,7 @@ def downloadMTOfiles(sourcepath, noOfFiles, intend):
         datestring = datetime.strptime(datestring, "%Y%m%d") - timedelta(days=1)
         datestring = datestring.strftime("%Y%m%d")
 
-    return latestFileDate, counta
+    return latestFileDate, secfileDate, counta
 
 
 def deleteoldmto(sourcepath, cutoffdays, intend):
@@ -168,43 +172,64 @@ def consolidatefofile(sourcepath, destinationpath, inputfile, outputfile,  inten
 
         print(intend + "Inputfile [" + inputfile + "] consolidated in to [" + outputfile + "]")
 
-'''
-def download_files(sourcepath, filename, url):
-    file_path = sourcepath + '\\' + filename
-    print(url)
-    response = requests.get(url)
-    print(file_path)
-    with open(filename, "wb") as f:
-        f.write(response.content)
-    print('Data downloaded successfully.')
-'''
 
-def download_files(sourcepath, filename, url):
-    file_path = sourcepath + '\\' + filename
-    # url = 'https://www1.nseindia.com/archives/equities/mto/MTO_14032023.DAT'
-    print(url)
-    print('Chunksize')
+def download_files(filepath, filename, url, intend):
+    file_path = filepath + '\\' + filename
     try:
         response = requests.get(url, stream=True, timeout=10)
-        print(file_path)
         response.raise_for_status()
         with open(file_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=1024 * 1024):
                 f.write(chunk)
-        print('Data downloaded successfully.')
+        print(intend + 'Data downloaded successfully. [' + filename + ']')
 
     except requests.exceptions.RequestException as e:
         # Handle any exceptions that occur during the request
-        print( 'Error downloading file: [' + filename +'] File not available in site')
+        print(intend + 'Error downloading file: [' + filename + '] File not available in site')
         print(e)
-        print( 'TRY again LATER')
+        print(intend + 'TRY again LATER')
         sys.exit(1)  # exit the process with a non-zero exit code
 
-'''
-def download_files(sourcepath, filename, url):
-    file_path = sourcepath + '\\' + filename
-    url = 'https://www.niftyindices.com/IndexConstituent/ind_niftymidcap100list.csv'
-    print(url)
-    urllib.request.urlretrieve(url, filename)
-    print('Data downloaded successfully.')
-'''
+
+def createfinalDelData(inputFilePath, sectorFilePath, outputFilePath, oputheader):
+    df = pd.read_csv(inputFilePath, header=None)
+    df_sector = pd.read_csv(sectorFilePath, header=None)
+
+    # merge the two dataframes on Script column using left join
+    merged_df = pd.merge(df, df_sector, how='left', left_on=3, right_on=0)
+    if oputheader[1] == 'Sector':
+        merged_df = merged_df.iloc[:, [3, 9]]
+    else:
+        merged_df = merged_df.iloc[:, 3]
+    merged_df = merged_df.drop_duplicates()
+
+    merged_df.to_csv(outputFilePath, header=False, index=False)
+
+
+def updatefinalDel_1(inputFilePath, outputFilePath, oputheader):
+    df = pd.read_csv(outputFilePath, header=0)          # header=0, then python will consider the first row as Header
+    df_sector = pd.read_csv(inputFilePath, header=0)
+
+    # merge the two dataframes on Script column using left join
+    merged_df = pd.merge(df, df_sector, how='left', left_on='Script', right_on='Symbol')
+    merged_df = merged_df.iloc[:, [0, 2]]
+
+    # Changing the header as per our data
+    merged_df.columns = oputheader
+
+    merged_df.to_csv(outputFilePath, header=True, index=False)
+
+
+def updatefinalDel_2(inputFilePath, outputFilePath, oputheader):
+    print(oputheader)
+    df = pd.read_csv(outputFilePath, header=0)
+    df_bhav = pd.read_csv(inputFilePath, header=0)
+
+    inputcol = df_bhav.columns
+    outputcol = df.columns
+
+    df_bhav = df_bhav[df_bhav[inputcol[1]] == 'EQ']     # inputcol[1] = ' SERIES'
+
+    # merge the two dataframes on Script column using left join
+    # outputcol[0] = 'Sector' & inputcol[0] = 'SYMBOL'
+    merged_df = pd.merge(df, df_bhav, how='left', left_on=outputcol[0], right_on=inputcol[0])

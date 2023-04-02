@@ -1,4 +1,6 @@
 # 2023-03-11 Recreate the java code ConsolidatedFileCreation.java
+# 2023-03-24 Included File download portion
+    # sec_bhavdata_DDMMYYYY.csv + bulk.csv + block.csv
 
 # import
 import configparser
@@ -6,6 +8,7 @@ from datetime import datetime
 import os
 import pandas as pd
 import glob
+import sys
 import zipfile
 import subprocess
 
@@ -22,8 +25,9 @@ print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileC
       + configFile + "]")
 
 # Variables assigning [common variables]
-sourcePath = config['datapoints-ConsolidatedFileCreation']['sourcePath']
-destinationpath = config['datapoints-ConsolidatedFileCreation']['destinationpath']
+sourcePath = config['datapoints-Common']['sourcePath']
+destinationpath = config['datapoints-Common']['destinationpath']
+
 
 
 # ################  [START] Works on Merging the MTO files
@@ -35,7 +39,7 @@ outputFile = config['datapoints-ConsolidatedFileCreation']['outputFile']
 MTOfileCount = config['datapoints-ConsolidatedFileCreation']['MTOfileCount']
 
 # Download the MTO DAT files
-latestFileDate, date_count = util.downloadMTOfiles(sourcePath, int(MTOfileCount), '        ')
+latestFileDate, secfileDate, date_count = util.downloadMTOfiles(sourcePath, int(MTOfileCount), '        ')
 # used the above variable [latestFileDate] down while calling a function to download foddMMMyyyybhav.csv
 
 # Delete the older MTO files
@@ -97,7 +101,7 @@ cols = [cols[-1]] + cols[:-1]
 df = df[cols]
 
 # Write the merged data to a csv file without header
-df.to_csv(sourcePath+"\\" + outputFile, index=False, header=False)
+df.to_csv(destinationpath+"\\" + outputFile, index=False, header=False)
 
 print(f"		Number of 'MTO' Files Merged [{NoofFiles}] and created the new file [{outputFile}]")
 print(" 	Delivery DataPoint file consolidation - Completed")
@@ -153,13 +157,15 @@ print(" 	Future OI data consolidation - Completed")
 print("")
 print(" 	Sector data file creation - Started")
 
-# Download Sector files - Commenting these functions as this is not working as expected. The py keeps on running for long time.
+"""
+# Download Sector files - Commenting these functions as this is not working as expected. The py keeps on running for 
+# long time. So expecting manual download for these files. Occasionally we can download these files.
 # util.download_files(sourcePath, 'ind_nifty500list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_nifty500list.csv')
 # util.download_files(sourcePath, 'ind_niftymidcap100list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftymidcap100list.csv')
 # util.download_files(sourcePath, 'ind_niftysmallcap250list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftysmallcap250list.csv')
 # util.download_files(sourcePath, 'ind_niftylargemidcap250list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftylargemidcap250list.csv')
 # util.download_files(sourcePath, 'ind_niftymidsmallcap400list.csv', 'https://www.niftyindices.com/IndexConstituent/ind_niftymidsmallcap400list.csv')
-
+"""
 
 # Variable
 SectorFile = config['datapoints-ConsolidatedFileCreation']['SectorOutFileName']
@@ -194,6 +200,25 @@ print("         Sectorfile created [" + SectorFile + "]")
 
 print(" 	Sector data file creation - Completed")
 # ################  [END] Sector data file creation
+
+# ################  [START] File download.
+print("")
+print(" 	Few other Files download - Started")
+
+sec_bhavdata_link = config['datapoints-Common']['sec_bhavdata_link']
+sec_bhavdata_link = sec_bhavdata_link.replace("DDMMYYYY", secfileDate)
+sec_bhavdata_file = config['datapoints-Common']['sec_bhavdata_file']
+util.download_files(sourcePath, sec_bhavdata_file, sec_bhavdata_link, '         ')
+
+block_link = config['datapoints-Common']['block_link']
+blockfile = config['datapoints-Common']['blockfile']
+bulk_link = config['datapoints-Common']['bulk_link']
+bulkfile = config['datapoints-Common']['bulkfile']
+util.download_files(sourcePath, blockfile, block_link, '         ')
+util.download_files(sourcePath, bulkfile, bulk_link, '         ')
+
+print(" 	File download - Completed")
+# ################  [END] File download.
 
 print("")
 print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Completed")

@@ -10,3 +10,9 @@ flowchart TB
     C1[Delete the outputfile] --> C2[Download the latest Zip file from url<br>this latest file is identified by a <br> variable from MOT file consolidation<br>If this latest file is not available in <br>website, then exit the proess]
     C2 --> C4[Extract the zip file<br>And consolidate the data<br> in that file across the SYMBOL]
     end
+    C --> D
+    subgraph D[Sector Data file creation]
+    end
+    D --> E
+    subgraph E[Few other files download]
+    end
