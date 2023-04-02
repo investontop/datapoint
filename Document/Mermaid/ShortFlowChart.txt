@@ -10,3 +10,10 @@ flowchart TB
     C1[Delete old outputfile<br>FandO_Output.csv] --> C2[Download zip file<br> fo10MAR2023bhav.csv.zip.<br> Extract 'fo10MAR2023bhav.csv']
     C2 --> C4[Consolidate <br>fo10MAR2023bhav.csv to <br> FandO_Output.csv]
     end
+    C --> D
+    subgraph D[Sector Data file creation]
+    D1[ind_nifty*csv] --> D2[SectorName.csv]
+    end
+    D --> E
+    subgraph E[Few other files download. <br> Auto Download: <br> 1. sec_bhavdata_full.csv <br> 2. block.csv <br> 3. bulk.csv]
+    end
