@@ -2,7 +2,7 @@
 Recreating the Java codes in Python
 
 ## Detailed Flow chart: <br> 
-Click [here](https://github.com/investontop/datapoint/edit/master/README.md#short-flow-chart-) to see the Short version
+Click [here](#short-flow-chart-) to see the Shorter version
 
 ```mermaid
 flowchart TB
