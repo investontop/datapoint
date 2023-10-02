@@ -1,8 +1,12 @@
 # Datapoint
 Recreating the Java codes in Python
 
-## Detailed Flow chart: <br> 
-Click [here](#short-flow-chart-) to see the Shorter version
+# Content:
+- Detail Flow of [ConsolidatedFileCreation.py](README.md#detailed-flow-of-consolidatedfilecreationpy-)
+- Short version of [ConsolidatedFileCreation.py](/README.md#short-flow-chart-)
+- Flow of [FinalFileCreation.py](/README.md#flow-of-finalfilecreationpy-)
+
+## Detailed Flow of ConsolidatedFileCreation.py: <br> 
 
 ```mermaid
 flowchart TB
@@ -48,4 +52,24 @@ flowchart TB
     D --> E
     subgraph E[Few other files download. <br> Auto Download: <br> 1. sec_bhavdata_full.csv <br> 2. block.csv <br> 3. bulk.csv]
     end
+```
+
+## Flow of FinalFileCreation.py: <br>
+
+```mermaid
+flowchart TB
+    A[FinalFileCreation.py] -->|imports, variable configs| B
+    subgraph B[Creation of FinalDeliveryData.csv]
+    B1[MergedDeliveryData.csv] --> B2[Copy the Script col and<br>remove the duplicates]
+    B2 --> B3[Create new file <br>'FinalDeliveryData.csv']
+    end
+    B --> C
+    subgraph C[Update FinalDeliveryData.csv]
+    C2[Include Sector from <br> 'SectorName.csv']
+    C2 --> C4["Include <br>(PrevClose,TodayClose, <br>PriceMov,PriceChg,1DayCandle)"]
+    C4 --> C5[Include Bulk/Block]
+    C5 --> C6[Included DelPerDays]
+    C6 --> C7[YETTO: Included Futures<br>data ]
+    end
+    C --> END
 ```
