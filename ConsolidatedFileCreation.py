@@ -1,6 +1,7 @@
 # 2023-03-11 Recreate the java code ConsolidatedFileCreation.java
 # 2023-03-24 Included File download portion
     # sec_bhavdata_DDMMYYYY.csv + bulk.csv + block.csv
+# 2023-10-02 Included a Validation between [MTOfileCount] & [DelPerDays]
 
 # import
 import configparser
@@ -23,6 +24,7 @@ config.read(configFile)
 
 print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Started - Considering config: ["
       + configFile + "]")
+print('Note: Exit Code 0 means Success')
 
 # Variables assigning [common variables]
 sourcePath = config['datapoints-Common']['sourcePath']
@@ -37,6 +39,16 @@ print(" 	Delivery DataPoint file consolidation - Started")
 # Variables assigning [Merging the MTO files]
 outputFile = config['datapoints-ConsolidatedFileCreation']['outputFile']
 MTOfileCount = config['datapoints-ConsolidatedFileCreation']['MTOfileCount']
+
+DelPerDays = config.get('datapoints-FinalFileCreation', 'DelPerDays')
+DelPerDays = DelPerDays.split(',')
+
+
+if int(DelPerDays[-1]) > int(MTOfileCount):
+    print('         [Validation] Please set the config correct [MTOfileCount] must be greater than or equal to [DelPerDays]''s last value')
+    print('')
+    print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " ConsolidatedFileCreation Completed with Warning!!")
+    exit()
 
 # Download the MTO DAT files
 latestFileDate, secfileDate, date_count = util.downloadMTOfiles(sourcePath, int(MTOfileCount), '        ')
