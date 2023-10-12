@@ -380,5 +380,3 @@ def updatefinalDel_4(inputFilePath, outputFilePath, oputheader, DelPerDays, inte
 
     print(intend + '[' + os.path.basename(outputFilePath) + '] Column added [DelPerDays]')
 
-
-
