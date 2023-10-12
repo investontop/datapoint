@@ -12,7 +12,7 @@ import pandas as pd
 
 def initiate_env_var(whattoreturn):
     if whattoreturn == 'ConfigFile':
-        return 'config-test.ini'
+        return 'config.ini'
 
 # read configs
 config = configparser.ConfigParser()        # instance
