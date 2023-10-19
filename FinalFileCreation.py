@@ -1,4 +1,5 @@
 # 2023-03-23 Recreate the java code FinalFileCreation.java
+# 2023-10-16 Included the Specific File creation based on the value in [SpecificScripts] [scripts]
 
 # import
 import configparser
@@ -82,6 +83,23 @@ while i <= len(header)-1:
         util.updatefinalDel_4(inputFilePath, outputFilePath, header, DelPerDays, '        ')
         i += len(DelPerDays)
     # Need to develop some code to handle the Futures details in a ElseIF
+
+
+print('')
+
+# 2023/10/16 code on specific Script
+
+specificScripts = config.get('SpecificScripts', 'scripts')
+specificScripts = specificScripts.split(',')
+SpecificFile = config['SpecificScripts']['SpecificFile']                        # FinalDeliveryData_Specific.csv
+specificFilePath = os.path.join(destinationpath, SpecificFile)
+util.checkAndDeleteFile(specificFilePath, 'Y', SpecificFile, '        ')
+
+df = pd.read_csv(outputFilePath)                                                # Reading the file FinalDeliveryData.csv
+filtered_df = df[df['Script'].isin(specificScripts)]                            # Filter the DataFrame based on the specific stocks
+filtered_df.to_csv(specificFilePath, index=False, header=True)                  # Write the filtered data to a new CSV file with the header
+
+print('        The specific File is also created')
 
 print("")
 print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " FinalFileCreation Completed")

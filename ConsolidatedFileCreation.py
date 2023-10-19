@@ -38,7 +38,7 @@ print(" 	Delivery DataPoint file consolidation - Started")
 
 # Variables assigning [Merging the MTO files]
 outputFile = config['datapoints-ConsolidatedFileCreation']['outputFile']
-MTOfileCount = config['datapoints-ConsolidatedFileCreation']['MTOfileCount']
+MTOfileCount = config['datapoints-ConsolidatedFileCreation']['MTOfileCount'] #TODO: We can take the last value from DelPerDays. In this case we do not require the below Validation.
 
 DelPerDays = config.get('datapoints-FinalFileCreation', 'DelPerDays')
 DelPerDays = DelPerDays.split(',')
