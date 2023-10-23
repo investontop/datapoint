@@ -31,15 +31,17 @@ DelPerDays = config.get('datapoints-FinalFileCreation', 'DelPerDays')
 DelPerDays = DelPerDays.split(',')
 MTOfileCount = (int(DelPerDays[-1]))
 
+print(intend+'Need to DownLoad MTOfilecount: {}'.format(MTOfileCount))
+print(intend + 'the del% calc like {}'.format(DelPerDays))
+print('')
+
 if not os.path.exists(adhocMTOpath):
     os.makedirs(adhocMTOpath)
 
 script = input(intend + 'Enter the script name: ')
 script = script.upper()
 date = input(intend + 'Enter the Date in [YYYYMMDD] format: ')
-print('')
-print(intend+'Need to DownLoad MTOfilecount: {}'.format(MTOfileCount))
-print('')
+dateStr = date
 # Validate the entered date format
 if util.is_valid_date(date):
     date = datetime.strptime(date, '%Y%m%d')
@@ -89,11 +91,16 @@ inputdf = inputdf.sort_values(['Script', 'Date'], ascending=[True, False])
 # Create an DataFrame with header and Script
 opRecord = {'Script': [script]}
 outputDF = pd.DataFrame(opRecord)
+outputDF['Date'] = dateStr
 
 outputDF = util_adhoc.updatefinalDel_4_adhoc(inputdf, outputDF, DelPerDays, intend)
 print(outputDF)
 
-outputDF.to_csv(os.path.join(adhocMTOpath, script +'.txt'), sep='\t', index=False)
+# Write the data from dataframe in to a file
+if os.path.exists(os.path.join(adhocMTOpath, 'Final.txt')):
+    outputDF.to_csv(os.path.join(adhocMTOpath, 'Final.txt'), sep=',', index=False, mode='a')
+else:
+    outputDF.to_csv(os.path.join(adhocMTOpath, 'Final.txt'), sep=',', index=False)
 
 print("")
 print('['+datetime.now().strftime("%Y-%m-%d %H:%M:%S")+']' + " adHoc DelPercentage Completed")
